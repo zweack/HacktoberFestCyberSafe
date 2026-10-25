@@ -44,14 +44,13 @@ Without uv, use the root `requirements.txt` (same pins, exported from `uv.lock`)
 cd backend
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r ../requirements.txt       # runtime: FastAPI, uvicorn, temporalio, httpx, pydantic
-pip install -r requirements-dev.txt      # tests: pytest, pytest-asyncio
+pip install -r requirements-dev.txt      # dev tools: pytest, pytest-asyncio, ruff
 ```
 
-Regenerate them after changing dependencies (from `backend/`; keep the header comment block in the root file):
+Regenerate all three pip files after changing dependencies (from the repo root; keeps the root header):
 
 ```sh
-uv export --frozen --no-dev --no-hashes --no-emit-project | grep -vE '^\s*#' >> ../requirements.txt   # after trimming old pins
-uv export --frozen --only-group dev --no-hashes --no-emit-project -o requirements-dev.txt
+./scripts/export-requirements.sh
 ```
 
 ## 3. Web dependencies
@@ -84,7 +83,11 @@ chmod 600 ~/.config/cybersafe/llm.env
 | `COORDINATOR_TELEGRAM_CHAT_ID` | empty | Where escalations are sent |
 | `CHECKIN_INTERVAL_SECONDS` | `60` | Time between check-ins (use 20 for demos) |
 | `MAX_UNANSWERED_CHECKINS` | `2` | Unanswered check-ins before a human coordinator is called |
+| `STAFF_TOKEN` | empty | Shared secret for coordinator and ops endpoints (`X-Staff-Token`). Empty = open, local development only |
+| `LLM_URGENT_TIMEOUT_SECONDS` | `6` | "Happening now" and "I've been cheated" answers wait at most this long for the AI |
 | `TEMPORAL_ADDRESS` | `localhost:7233` | Temporal frontend |
+| `TEMPORAL_NAMESPACE` | `default` | Temporal namespace |
+| `TEMPORAL_TASK_QUEUE` | `cybersafe-followups` | Task queue of the follow-up worker |
 | `DATABASE_PATH` | `data/cybersafe.db` | SQLite file (relative to `backend/`) |
 
 List the models your key can use:
@@ -99,7 +102,11 @@ curl -s https://models.jarvislabs.net/v1/models -H "Authorization: Bearer $LLM_A
 ```sh
 ./scripts/dev.sh                               # Temporal + API + worker + web
 CHECKIN_INTERVAL_SECONDS=20 ./scripts/dev.sh   # faster check-ins for a demo
+STAFF_TOKEN=$(openssl rand -hex 16) ./scripts/dev.sh   # protect coordinator/ops pages
+PORT=8020 WEB_PORT=5180 ./scripts/dev.sh       # other ports (e.g. a second checkout)
 ```
+
+The coordinator and ops pages ask for the staff token once per browser tab when `STAFF_TOKEN` is set.
 
 | What | URL |
 |---|---|
@@ -111,9 +118,16 @@ CHECKIN_INTERVAL_SECONDS=20 ./scripts/dev.sh   # faster check-ins for a demo
 
 ## 6. Verify
 
+From the repo root (each line is independent):
+
 ```sh
-cd backend && uv run pytest -q      # backend tests (never call real LLM/Telegram)
-cd web && bun run build             # type-check and build the web app
-./scripts/status.sh                 # readiness, Temporal, worker pollers, recent errors
-curl -s localhost:8000/readyz       # {"status":"ready","checks":{"database":"ok","temporal":"ok","llm":"configured"}}
+(cd backend && uv run pytest -q)        # backend tests (never call real LLM/Telegram)
+(cd backend && uv run ruff check)       # lint
+(cd web && bun run build)               # type-check and build the web app
+./scripts/status.sh                     # readiness, Temporal, worker pollers, recent errors
+curl -s localhost:8000/readyz           # {"status":"ready","checks":{"database":"ok","temporal":"ok","worker":"ok","staff_auth":"disabled","llm":"configured"}}
 ```
+
+`/readyz` returns 503 only when the API cannot work (database or Temporal down). If no worker polls the
+task queue it stays 200 with `"status":"degraded"` and `"worker":"no_pollers"`: cases are saved, but
+check-ins and escalations wait until a worker is back.

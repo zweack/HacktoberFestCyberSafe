@@ -45,9 +45,9 @@ def checkin_keyboard(case_id: str) -> dict:
 def parse_callback(data: str) -> tuple[str, str] | None:
     """(case_id, answer) for a correctly signed check-in button, else None."""
     parts = (data or "").split(":")
-    if len(parts) == 4 and parts[0] == "ci" and parts[2] in {a for _, a in CHECKIN_BUTTONS}:
-        if hmac.compare_digest(parts[3], _sign(parts[1], parts[2])):
-            return parts[1], parts[2]
+    if (len(parts) == 4 and parts[0] == "ci" and parts[2] in {a for _, a in CHECKIN_BUTTONS}
+            and hmac.compare_digest(parts[3], _sign(parts[1], parts[2]))):
+        return parts[1], parts[2]
     return None
 
 

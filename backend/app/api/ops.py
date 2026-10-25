@@ -45,6 +45,16 @@ def _gauges() -> str:
         lines.append("# TYPE cybersafe_notifications gauge")
         for s in sorted({"pending", "sent", "failed", *notes}):
             lines.append(f'cybersafe_notifications{{status="{s}"}} {notes.get(s, 0)}')
+        # Worker-side counters (app.metrics) live in the worker process and are not scraped here;
+        # these totals come from the shared DB, so they include retries done by the worker.
+        with db._lock:
+            attempts = db._connect().execute(
+                "SELECT COALESCE(SUM(json_extract(data, '$.attempts')), 0) FROM notifications").fetchone()[0]
+            escalated = db._connect().execute(
+                "SELECT COUNT(*) FROM cases, json_each(cases.data, '$.timeline') "
+                "WHERE json_extract(json_each.value, '$.kind') = 'escalated'").fetchone()[0]
+        lines += ["# TYPE cybersafe_notification_attempts gauge", f"cybersafe_notification_attempts {attempts}",
+                  "# TYPE cybersafe_escalations gauge", f"cybersafe_escalations {escalated}"]
         lines.append("cybersafe_db_up 1")
     except Exception:  # noqa: BLE001
         lines.append("cybersafe_db_up 0")

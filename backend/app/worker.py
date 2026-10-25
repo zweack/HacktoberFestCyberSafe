@@ -77,7 +77,7 @@ async def telegram_loop() -> None:
     while True:
         try:
             body = await telegram.call("getUpdates", {"offset": offset, "timeout": 25}, timeout=35)
-        except Exception:  # noqa: BLE001
+        except Exception:
             log.exception("telegram getUpdates failed; retrying in 5s")
             await asyncio.sleep(5)
             continue
@@ -85,7 +85,7 @@ async def telegram_loop() -> None:
             uid = upd["update_id"]
             try:
                 await handle_update(upd)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 failures[uid] = failures.get(uid, 0) + 1
                 log.exception("telegram update failed", extra={"update_id": uid, "attempt": failures[uid]})
                 if failures[uid] < MAX_UPDATE_ATTEMPTS:
@@ -102,12 +102,12 @@ async def outbox_loop(client) -> None:
         queued = await outbox.reconcile_orphans(client)
         if queued:
             log.warning("queued follow-up start for orphaned cases", extra={"cases": queued})
-    except Exception:  # noqa: BLE001
+    except Exception:
         log.exception("orphan reconcile failed")
     while True:
         try:
             await outbox.deliver(client)
-        except Exception:  # noqa: BLE001
+        except Exception:
             log.exception("outbox delivery failed")
         await asyncio.sleep(OUTBOX_INTERVAL_SECONDS)
 

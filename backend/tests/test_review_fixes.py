@@ -26,8 +26,16 @@ from app.logging_setup import JsonFormatter, setup_logging
 from app.main import app
 from app.notify import telegram
 from app.schemas import (
-    AnalyzeRequest, Case, CaseStatus, CheckinAnswer, CheckinResponse, CoordinatorAction, Notification,
-    NotificationChannel, Situation, Verdict,
+    AnalyzeRequest,
+    Case,
+    CaseStatus,
+    CheckinAnswer,
+    CheckinResponse,
+    CoordinatorAction,
+    Notification,
+    NotificationChannel,
+    Situation,
+    Verdict,
 )
 from app.workflows import activities, case_ops, outbox
 from app.workflows import client as temporal
@@ -324,9 +332,11 @@ TQ = "test-review"
 
 @pytest.fixture
 async def env():
-    async with await WorkflowEnvironment.start_time_skipping(data_converter=pydantic_data_converter) as e:
-        async with Worker(e.client, task_queue=TQ, workflows=[CaseFollowUpWorkflow], activities=ALL_ACTIVITIES):
-            yield e
+    async with (
+        await WorkflowEnvironment.start_time_skipping(data_converter=pydantic_data_converter) as e,
+        Worker(e.client, task_queue=TQ, workflows=[CaseFollowUpWorkflow], activities=ALL_ACTIVITIES),
+    ):
+        yield e
 
 
 async def _start(env, chat="111"):

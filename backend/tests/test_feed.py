@@ -36,7 +36,6 @@ def test_feed_next_reset_and_mix():
 async def test_feed_stream_emits_new_message():
     import asyncio
 
-
     from app.api import feed as feed_mod
 
     class FakeRequest:

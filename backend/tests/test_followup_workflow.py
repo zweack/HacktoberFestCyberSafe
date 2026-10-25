@@ -7,24 +7,33 @@ from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
 from app import db
+from app.detector.steps import recovery_case_steps
 from app.notify import telegram
 from app.schemas import (
-    Case, CaseStatus, CheckinAnswer, CheckinResponse, CoordinatorAction, Notification, NotificationChannel,
-    NotificationStatus, Situation,
+    Case,
+    CaseStatus,
+    CheckinAnswer,
+    CheckinResponse,
+    CoordinatorAction,
+    Notification,
+    NotificationChannel,
+    NotificationStatus,
+    Situation,
 )
 from app.workflows import case_ops
 from app.workflows.activities import ALL_ACTIVITIES
 from app.workflows.followup import CaseFollowUpWorkflow, FollowUpInput, workflow_id
-from app.detector.steps import recovery_case_steps
 
 TQ = "test-followups"
 
 
 @pytest.fixture
 async def env():
-    async with await WorkflowEnvironment.start_time_skipping(data_converter=pydantic_data_converter) as e:
-        async with Worker(e.client, task_queue=TQ, workflows=[CaseFollowUpWorkflow], activities=ALL_ACTIVITIES):
-            yield e
+    async with (
+        await WorkflowEnvironment.start_time_skipping(data_converter=pydantic_data_converter) as e,
+        Worker(e.client, task_queue=TQ, workflows=[CaseFollowUpWorkflow], activities=ALL_ACTIVITIES),
+    ):
+        yield e
 
 
 async def start(env, **case_kw):
@@ -100,7 +109,7 @@ async def test_flaky_telegram_is_retried(env, monkeypatch):
             raise telegram.TelegramError("simulated outage")
 
     monkeypatch.setattr(telegram, "send_message", flaky)
-    case, h = await start(env, telegram_chat_id="12345")
+    _case, h = await start(env, telegram_chat_id="12345")
     await h.signal(CaseFollowUpWorkflow.checkin_response, CheckinResponse(answer=CheckinAnswer.done))
     await h.result()
     tg = [n for n in db.list_all("notifications", Notification) if n.channel == NotificationChannel.telegram]

@@ -6,6 +6,7 @@ outbox every few seconds; commands for one case are delivered in order. Delivery
 at-least-once: the signal handlers are written to tolerate a repeated command.
 """
 
+import contextlib
 import logging
 
 from pydantic import BaseModel, Field
@@ -57,11 +58,9 @@ def pending_for(case_id: str) -> list[OutboxItem]:
 async def _deliver(client: Client, item: OutboxItem) -> None:
     if item.command == START:
         case = case_ops.load(item.case_id)
-        try:
+        with contextlib.suppress(WorkflowAlreadyStartedError):  # an earlier, ambiguous attempt did start it
             await client.start_workflow(CaseFollowUpWorkflow.run, followup_input(case), id=workflow_id(case.id),
                                         task_queue=get_settings().temporal_task_queue)
-        except WorkflowAlreadyStartedError:
-            pass  # an earlier, ambiguous attempt did start it
         return
     signal, model = SIGNALS[item.command]
     arg = model.model_validate(item.arg) if model else item.arg
@@ -110,10 +109,8 @@ async def deliver(client: Client, case_id: str | None = None) -> int:
         done += 1
     for cid in touched - blocked:
         if not pending_for(cid):
-            try:
+            with contextlib.suppress(case_ops.CaseNotFound):
                 case_ops.mutate(cid, lambda c: setattr(c, "followup_pending", False))
-            except case_ops.CaseNotFound:
-                pass
     if done:
         log.info("outbox delivered", extra={"delivered": done, "still_blocked": len(blocked)})
     return done
