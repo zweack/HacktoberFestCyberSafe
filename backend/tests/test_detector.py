@@ -143,7 +143,8 @@ async def test_llm_success(monkeypatch):
 
     _configure(monkeypatch, handler)
     r = await analyze(AnalyzeRequest(text=SCAMS[0][0]))
-    assert r.ai_used and r.ai_error is None and r.headline == "Do not click."
+    assert r.ai_used and r.ai_error is None and r.explanation == "Fake bank."
+    assert r.headline == "This is a scam. Do not click, reply or pay."  # headline is never model text
     user = json.loads(seen["body"]["messages"][1]["content"])
     assert user["rule_signals"] and user["directory"]
 
@@ -184,7 +185,7 @@ async def test_metrics_and_no_pii_in_logs(caplog):
     await analyze(AnalyzeRequest(text="SECRETTEXT please share OTP now"))
     assert 'cybersafe_analyze_total{ai_used="false",verdict="scam"}' in metrics.render()
     assert "SECRETTEXT" not in caplog.text
-    rec = [r for r in caplog.records if getattr(r, "event", None) == "analysis"][0]
+    rec = next(r for r in caplog.records if getattr(r, "event", None) == "analysis")
     assert rec.verdict == "scam" and "SECRETTEXT" not in json.dumps(rec.__dict__, default=str)
 
 

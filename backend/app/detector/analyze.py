@@ -6,6 +6,7 @@ import time
 
 from app import metrics
 from app.chaos import get_chaos
+from app.config import get_settings
 from app.detector import llm, steps
 from app.detector.rules import run_rules
 from app.schemas import AnalyzeRequest, AnalyzeResponse, Situation, Verdict
@@ -30,11 +31,18 @@ async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
     headline = steps.rule_headline(req.situation, verdict, req.language)
     explanation = steps.rule_explanation([s.label for s in rules.signals], verdict, req.situation, req.language)
     ai_used, ai_error = False, None
+    refine = llm.refine(
+        text=req.text, situation=req.situation, language=req.language, signals=rules.signals,
+        rule_verdict=verdict, rule_scam_type=scam_type, contacts=contacts,
+    )
     try:
-        result = await llm.refine(
-            text=req.text, situation=req.situation, language=req.language, signals=rules.signals,
-            rule_verdict=verdict, rule_scam_type=scam_type, contacts=contacts,
-        )
+        if req.situation == Situation.received:
+            result = await refine
+        else:
+            # Someone is being scammed right now: the urgent steps must not wait on the AI.
+            result = await asyncio.wait_for(refine, get_settings().llm_urgent_timeout_seconds)
+    except TimeoutError:
+        ai_error = "AI helper was too slow, so we show the rule-based advice right away."
     except llm.LLMError as e:
         ai_error = str(e)
     except Exception:  # unexpected bug: still visible, never fatal
@@ -45,7 +53,8 @@ async def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
         if result.verdict != verdict:
             verdict = result.verdict
             contacts = steps.contacts(req.situation, verdict, result.scam_type, text, req.language)
-        scam_type, headline, explanation = result.scam_type, result.headline, result.explanation
+            headline = steps.rule_headline(req.situation, verdict, req.language)
+        scam_type, explanation = result.scam_type, result.explanation
 
     risk = rules.risk_score
     if verdict == Verdict.scam:

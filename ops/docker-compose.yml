@@ -11,12 +11,15 @@ x-app-env: &app-env
     TEMPORAL_ADDRESS: temporal:7233
     DATABASE_PATH: /data/cybersafe.db
     CORS_ORIGINS: http://localhost:8080
+    # Required: coordinator and ops endpoints are open without it. Set it in your shell or .env.
+    STAFF_TOKEN: ${STAFF_TOKEN:?set STAFF_TOKEN to a long random secret}
 
 services:
   temporal:
     image: temporalio/temporal:latest
     command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/temporal/temporal.db", "--log-level", "warn"]
-    ports: ["7233:7233", "8233:8233"]
+    # Temporal has no auth: keep it on the Compose network; the UI is bound to this host only.
+    ports: ["127.0.0.1:8233:8233"]
     volumes: ["temporal-data:/temporal"]
     healthcheck:
       test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "127.0.0.1:7233"]
@@ -28,7 +31,7 @@ services:
   api:
     build: { context: .., dockerfile: ops/Dockerfile.api }
     <<: *app-env
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]
     volumes: ["app-data:/data"]
     depends_on: { temporal: { condition: service_healthy } }
     healthcheck:

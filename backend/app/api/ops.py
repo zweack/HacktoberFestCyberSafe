@@ -1,13 +1,15 @@
 """/metrics and chaos switches for the ops team. Owner: ops."""
 
 import json
+import logging
 import os
 import platform
 import time
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Depends, Response
 
 from app import chaos, db, metrics
+from app.auth import require_staff
 from app.schemas import ChaosSettings
 
 router = APIRouter(tags=["ops"])
@@ -43,6 +45,16 @@ def _gauges() -> str:
         lines.append("# TYPE cybersafe_notifications gauge")
         for s in sorted({"pending", "sent", "failed", *notes}):
             lines.append(f'cybersafe_notifications{{status="{s}"}} {notes.get(s, 0)}')
+        # Worker-side counters (app.metrics) live in the worker process and are not scraped here;
+        # these totals come from the shared DB, so they include retries done by the worker.
+        with db._lock:
+            attempts = db._connect().execute(
+                "SELECT COALESCE(SUM(json_extract(data, '$.attempts')), 0) FROM notifications").fetchone()[0]
+            escalated = db._connect().execute(
+                "SELECT COUNT(*) FROM cases, json_each(cases.data, '$.timeline') "
+                "WHERE json_extract(json_each.value, '$.kind') = 'escalated'").fetchone()[0]
+        lines += ["# TYPE cybersafe_notification_attempts gauge", f"cybersafe_notification_attempts {attempts}",
+                  "# TYPE cybersafe_escalations gauge", f"cybersafe_escalations {escalated}"]
         lines.append("cybersafe_db_up 1")
     except Exception:  # noqa: BLE001
         lines.append("cybersafe_db_up 0")
@@ -62,9 +74,20 @@ def _db_ok() -> bool:
         return False
 
 
+async def _worker_gauge() -> str:
+    from app.api.health import worker_pollers
+
+    try:
+        n = await worker_pollers()
+    except Exception:  # noqa: BLE001
+        n = -1  # could not ask Temporal
+    return ("# HELP cybersafe_worker_pollers Workers polling the follow-up task queue in the last 60s (-1 = unknown)\n"
+            f"# TYPE cybersafe_worker_pollers gauge\ncybersafe_worker_pollers {n}\n")
+
+
 @router.get("/metrics")
-def get_metrics() -> Response:
-    return Response(metrics.render() + _gauges(), media_type="text/plain; version=0.0.4")
+async def get_metrics() -> Response:
+    return Response(metrics.render() + _gauges() + await _worker_gauge(), media_type="text/plain; version=0.0.4")
 
 
 @router.get("/api/ops/chaos", response_model=ChaosSettings)
@@ -72,9 +95,7 @@ def get_chaos() -> ChaosSettings:
     return chaos.get_chaos()
 
 
-@router.put("/api/ops/chaos", response_model=ChaosSettings)
+@router.put("/api/ops/chaos", response_model=ChaosSettings, dependencies=[Depends(require_staff)])
 def put_chaos(body: ChaosSettings) -> ChaosSettings:
-    import logging
-
     logging.getLogger("app.ops").warning("chaos updated", extra={"chaos": json.loads(body.model_dump_json())})
     return chaos.set_chaos(body)

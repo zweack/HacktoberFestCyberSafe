@@ -36,14 +36,15 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port "$PORT" --no-access-log \
 PIDS+=($!)
 
 if [ -f "$ROOT/backend/app/worker.py" ]; then
-  uv run python -m app.worker >>"$ROOT/logs/worker.log" 2>&1 &
+  # Run the venv python directly so the pid file names the worker itself (chaos.sh kill-worker).
+  .venv/bin/python -m app.worker >>"$ROOT/logs/worker.log" 2>&1 &
   PIDS+=($!); echo $! >"$ROOT/.data/worker.pid"
 else
   echo "worker: backend/app/worker.py not present yet, skipping"
 fi
 
 if [ -f "$ROOT/web/package.json" ]; then
-  (cd "$ROOT/web" && bun install --silent && exec bun run dev --port "$WEB_PORT" --strictPort) \
+  (cd "$ROOT/web" && bun install --silent && API_PORT="$PORT" exec bun run dev --port "$WEB_PORT" --strictPort) \
     >>"$ROOT/logs/web.log" 2>&1 &
   PIDS+=($!)
 else

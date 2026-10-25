@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import type { AnalyzeResponse, Channel } from "../api/types";
-import { BackHome, ResultCard } from "../components";
+import { BackHome, errorText, ResultCard } from "../components";
 import { useI18n } from "../i18n";
 
 const CHANNELS: Channel[] = ["sms", "whatsapp", "email", "call"];
@@ -21,7 +21,7 @@ export default function Check() {
   async function submit() {
     setBusy(true); setErr(null);
     try { setResult(await api.analyze({ text, channel, situation: "received", language: lang })); }
-    catch { setErr(t.tryAgain); }
+    catch (e) { setErr(errorText(e, t)); }
     finally { setBusy(false); }
   }
 
@@ -29,7 +29,7 @@ export default function Check() {
     return (
       <>
         <BackHome />
-        <ResultCard r={result} />
+        <ResultCard r={result} message={{ text, label: t.messageYouChecked }} />
         <button className="btn btn-primary" onClick={() => { setResult(null); setText(""); }}>{t.checkAnother}</button>
       </>
     );
@@ -39,7 +39,7 @@ export default function Check() {
       <BackHome />
       <h1>{t.checkTitle}</h1>
       <p className="lede">{t.checkHint}</p>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} aria-label={t.checkTitle} />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} maxLength={10000} aria-label={t.checkTitle} />
       <button className="btn btn-quiet" onClick={paste}>📋 {t.paste}</button>
       <fieldset className="channels">
         <legend>{t.whereFrom}</legend>

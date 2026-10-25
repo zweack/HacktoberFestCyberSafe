@@ -57,11 +57,14 @@ def test_analysis_steps_used(fake_temporal):
     assert [s["id"] for s in case["steps"]] == ["x1"]
 
 
-def test_temporal_down_returns_503_and_saves_case(monkeypatch):
+def test_temporal_down_saves_case_as_pending(monkeypatch):
+    """A9: the case is kept, marked followup_pending, and its start is queued for the worker."""
     monkeypatch.setattr(temporal, "get_client", AsyncMock(side_effect=ConnectionError("refused")))
     r = TestClient(app).post("/api/cases", json=BODY)
-    assert r.status_code == 503
-    detail = r.json()["detail"]
-    assert "follow-up could not start" in detail["message"]
-    case = db.get("cases", detail["case_id"], Case)
-    assert case.status == CaseStatus.open and case.timeline[-1].kind == "error"
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["followup_pending"] is True and body["timeline"][-1]["kind"] == "error"
+    case = db.get("cases", body["id"], Case)
+    assert case.status == CaseStatus.open
+    from app.workflows import outbox
+    assert [i.command for i in outbox.pending_for(case.id)] == ["start"]

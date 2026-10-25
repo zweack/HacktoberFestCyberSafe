@@ -11,7 +11,7 @@
 # Secrets/settings: see docs/SETUP.md and ops/llm.env.example
 #
 # Pinned from backend/uv.lock. Regenerate with:
-#   cd backend && uv export --frozen --no-dev --no-hashes --no-emit-project (then keep this header)
+#   ./scripts/export-requirements.sh   (keeps this header)
 
 annotated-doc==0.0.5
 annotated-types==0.8.0

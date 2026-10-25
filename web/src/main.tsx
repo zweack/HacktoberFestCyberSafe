@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { useDemoMode } from "./api/client";
+import { NotFound } from "./components";
 import { I18nProvider, useI18n } from "./i18n";
 import Home from "./pages/Home";
 import Check from "./pages/Check";
@@ -33,6 +34,7 @@ function Shell() {
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/coordinator" element={<Coordinator />} />
           <Route path="/ops" element={<Ops />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     </>

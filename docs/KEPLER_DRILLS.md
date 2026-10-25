@@ -22,7 +22,7 @@ Temporal. The full symptom table is in [`KEPLER_RUNBOOK.md`](KEPLER_RUNBOOK.md).
 ![status.sh with the worker down](screenshots/ops-drills/01-status-worker-down.png)
 
 - Workflow task backlog on `cybersafe-followups` is growing (2 tasks, 41 s old); the only poller was last seen a minute ago.
-- `/readyz` still says **ready**: it checks the database and the Temporal frontend, not the worker. This gap was found by this drill and is being fixed (worker poller check in `/readyz` and `/metrics`).
+- `/readyz` still says **ready**: it checks the database and the Temporal frontend, not the worker. This gap was found by this drill and is now fixed: `/readyz` reports `"status": "degraded"` with `checks.worker: "no_pollers"` (still HTTP 200, the API itself works) and `/metrics` exposes `cybersafe_worker_pollers` (0 when no worker polled in the last 60 s).
 
 Temporal's Workers tab is a trap here: it still lists the dead worker as `RUNNING` because the registration has not expired. Trust the backlog and poller age instead.
 

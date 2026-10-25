@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import type { AnalyzeResponse, Contact, Verdict } from "./api/types";
+import { ApiError, setStaffToken, useStaffToken } from "./api/client";
+import type { AnalyzeResponse, Contact, Language, Verdict } from "./api/types";
 import { useI18n } from "./i18n";
 import { useSpeech } from "./speech";
 
@@ -35,29 +37,91 @@ export function ContactCard({ c }: { c: Contact }) {
   );
 }
 
-export function ReadAloud({ text }: { text: string }) {
+/** Reads text aloud in the language the text is written in (not just the UI language). */
+export function ReadAloud({ text, language }: { text: string; language?: Language }) {
   const { lang, t } = useI18n();
   const s = useSpeech();
   if (!s.supported) return null;
   return s.speaking
     ? <button className="btn btn-quiet" onClick={s.stop}>{t.stopReading}</button>
-    : <button className="btn btn-quiet" onClick={() => s.speak(text, lang)}>{t.readAloud}</button>;
+    : <button className="btn btn-quiet" onClick={() => s.speak(text, language ?? lang)}>{t.readAloud}</button>;
 }
 
-export function ResultCard({ r }: { r: AnalyzeResponse }) {
-  const { t } = useI18n();
-  const spoken = [r.headline, r.explanation, ...r.steps.map((s) => `${s.title}. ${s.detail}`)].join(" ");
+/** A heading that takes focus when it appears, so keyboard and screen-reader users land on the new content. */
+export function FocusHeading({ level = 1, className, children }: { level?: 1 | 2; className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { ref.current?.focus(); }, []);
+  const Tag = level === 1 ? "h1" : "h2";
+  return <Tag ref={ref} tabIndex={-1} className={className}>{children}</Tag>;
+}
+
+/** Short, localized text for a failed request. */
+export function errorText(e: unknown, t: ReturnType<typeof useI18n>["t"]): string {
+  if (e instanceof ApiError && e.offline) return t.offline;
+  return t.tryAgain;
+}
+
+/** Wrap each evidence snippet found in the message in <mark>, merging overlaps. */
+function highlight(text: string, snippets: string[]): ReactNode[] {
+  const ranges: [number, number][] = [];
+  for (const snip of snippets) {
+    if (!snip) continue;
+    let from = 0;
+    for (let i = text.indexOf(snip, from); i !== -1; i = text.indexOf(snip, from)) {
+      ranges.push([i, i + snip.length]);
+      from = i + snip.length;
+    }
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const r of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+    else merged.push([...r]);
+  }
+  const out: ReactNode[] = [];
+  let pos = 0;
+  merged.forEach(([a, b], i) => {
+    if (a > pos) out.push(text.slice(pos, a));
+    out.push(<mark key={i}>{text.slice(a, b)}</mark>);
+    pos = b;
+  });
+  if (pos < text.length) out.push(text.slice(pos));
+  return out;
+}
+
+export type CheckedMessage = { text: string; label: string; from?: string; subject?: string | null };
+
+export function ResultCard({ r, message }: { r: AnalyzeResponse; message?: CheckedMessage }) {
+  const { t, lang } = useI18n();
+  const contactLines = r.contacts.map((c) => [c.name, c.phone].filter(Boolean).join(" "));
+  const spoken = [
+    r.headline, r.explanation, !r.ai_used && r.ai_error ? r.ai_error : "",
+    ...r.steps.map((s) => `${s.title}. ${s.detail}`), ...contactLines,
+  ].filter(Boolean).join(" ");
   return (
-    <article className={`result result-${r.verdict}`}>
+    <article className={`result result-${r.verdict}`} lang={r.language}>
       <header className="result-head">
         <TrafficLight verdict={r.verdict} />
         <div>
           <div className={`verdict-word verdict-${r.verdict}`}>{t[`verdict_${r.verdict}`]}</div>
-          <h2 className="headline">{r.headline}</h2>
+          <FocusHeading level={2} className="headline">{r.headline}</FocusHeading>
         </div>
       </header>
+      {message && (
+        <section className="checked-message" aria-label={message.label}>
+          <h3>{message.label}</h3>
+          <div className="bubble">
+            {message.from && <div className="msg-from">{message.from}</div>}
+            {message.subject && <strong>{message.subject}</strong>}
+            <p>{highlight(message.text, r.signals.map((s) => s.evidence ?? ""))}</p>
+          </div>
+          {r.signals.some((s) => s.evidence) && <p className="hint">{t.highlightHint}</p>}
+        </section>
+      )}
+      {r.language !== lang && <p className="note" lang={lang}>{t[`contentIn_${r.language}`]}</p>}
       <p className="explain">{r.explanation}</p>
-      <ReadAloud text={spoken} />
+      <ReadAloud text={spoken} language={r.language} />
       {!r.ai_used && (
         <p className="note">{t.aiUnavailable}{r.ai_error ? `: ${r.ai_error}` : "."}</p>
       )}
@@ -94,6 +158,44 @@ export function ResultCard({ r }: { r: AnalyzeResponse }) {
         </section>
       )}
     </article>
+  );
+}
+
+/** Coordinator and ops pages: ask once for the shared staff token (kept for this browser tab only). */
+export function StaffGate({ children }: { children: ReactNode }) {
+  const token = useStaffToken();
+  const [draft, setDraft] = useState("");
+  return (
+    <>
+      <form className="staff-token" onSubmit={(e) => { e.preventDefault(); setStaffToken(draft.trim()); setDraft(""); }}>
+        {token
+          ? <p>Staff token set for this tab. <button type="button" className="btn-tiny" onClick={() => setStaffToken("")}>Forget token</button></p>
+          : <label>Staff token (ask the team lead; not needed if the server has none)
+              <input type="password" autoComplete="off" value={draft} onChange={(e) => setDraft(e.target.value)} />
+              <button className="btn-tiny">Save</button>
+            </label>}
+      </form>
+      {children}
+    </>
+  );
+}
+
+/** Text for a staff request error: a 401 means the token is missing or wrong. */
+export function staffError(e: unknown): string {
+  if (e instanceof ApiError && e.status === 401) return "Staff token missing or wrong. Enter it above.";
+  if (e instanceof ApiError && e.offline) return "Server not reachable.";
+  return e instanceof Error ? e.message : String(e);
+}
+
+export function NotFound() {
+  const { t } = useI18n();
+  return (
+    <>
+      <FocusHeading>{t.notFoundTitle}</FocusHeading>
+      <p>{t.notFoundText}</p>
+      <a className="btn btn-stop" href="tel:1930">📞 {t.call1930}</a>
+      <Link className="btn btn-primary" to="/">{t.home}</Link>
+    </>
   );
 }
 

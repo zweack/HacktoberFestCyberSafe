@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     # Storage
     database_path: str = "data/cybersafe.db"
 
+    # Shared secret for coordinator and ops endpoints (X-Staff-Token header). Empty = open (dev only).
+    staff_token: str = ""
+
+    # LLM deadline when someone is being scammed right now or already lost money: the
+    # rule-based urgent steps are returned after this many seconds even if the AI is slow.
+    llm_urgent_timeout_seconds: float = 6.0
+
     # CORS for the web app dev server
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
