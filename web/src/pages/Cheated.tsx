@@ -10,7 +10,10 @@ export default function Cheated() {
   const [f, setF] = useState({ name: "", what: "", amount: "", tg: "", fam: "", famTg: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => {
+    const value = e.target.value;
+    setF((prev) => ({ ...prev, [k]: value }));
+  };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

@@ -14,7 +14,7 @@ case "${1:-show}" in
   reset) put '{"telegram_failure_rate":0,"llm_down":false,"slow_analyze_ms":0}' ;;
   show) cur; echo ;;
   kill-worker)
-    pids=$(pgrep -f 'python -m app.worker' || true)
+    pids=$(pgrep -if 'python[^ ]* -m app\.worker' || true)
     [ -n "$pids" ] || { echo "no worker running"; exit 1; }
     echo "killing worker pid(s): $pids"; kill -9 $pids
     echo "restart with: cd $ROOT/backend && uv run python -m app.worker >>$ROOT/logs/worker.log 2>&1 &" ;;
