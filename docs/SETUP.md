@@ -26,12 +26,12 @@ cd backend
 uv sync            # creates .venv with exact locked versions, including dev tools
 ```
 
-Without uv, the same pins are exported to plain requirements files:
+Without uv, use the root `requirements.txt` (same pins, exported from `uv.lock`):
 
 ```sh
 cd backend
 python3.13 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt          # runtime: FastAPI, uvicorn, temporalio, httpx, pydantic
+pip install -r ../requirements.txt       # runtime: FastAPI, uvicorn, temporalio, httpx, pydantic
 pip install -r requirements-dev.txt      # tests: pytest, pytest-asyncio
 ```
 
