@@ -1,0 +1,57 @@
+# Deployment stack. Run from repo root: docker compose -f ops/docker-compose.yml up -d --build
+# Temporal uses the single-binary dev server (SQLite file on a volume): simplest reliable
+# option for a demo deployment. For production swap to auto-setup + postgres.
+name: cybersafe
+
+x-app-env: &app-env
+  env_file:
+    - path: ${LLM_ENV_FILE:-${HOME}/.config/cybersafe/llm.env}
+      required: false
+  environment:
+    TEMPORAL_ADDRESS: temporal:7233
+    DATABASE_PATH: /data/cybersafe.db
+    CORS_ORIGINS: http://localhost:8080
+
+services:
+  temporal:
+    image: temporalio/temporal:latest
+    command: ["server", "start-dev", "--ip", "0.0.0.0", "--db-filename", "/temporal/temporal.db", "--log-level", "warn"]
+    ports: ["7233:7233", "8233:8233"]
+    volumes: ["temporal-data:/temporal"]
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "127.0.0.1:7233"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: { context: .., dockerfile: ops/Dockerfile.api }
+    <<: *app-env
+    ports: ["8000:8000"]
+    volumes: ["app-data:/data"]
+    depends_on: { temporal: { condition: service_healthy } }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  worker:
+    build: { context: .., dockerfile: ops/Dockerfile.api }
+    <<: *app-env
+    command: ["python", "-m", "app.worker"]
+    volumes: ["app-data:/data"]
+    depends_on: { temporal: { condition: service_healthy } }
+    restart: unless-stopped
+
+  web:
+    build: { context: .., dockerfile: ops/Dockerfile.web }
+    ports: ["8080:80"]
+    depends_on: { api: { condition: service_healthy } }
+    restart: unless-stopped
+
+volumes:
+  app-data:
+  temporal-data:
