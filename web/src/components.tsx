@@ -114,9 +114,9 @@ export function ResultCard({ r, message }: { r: AnalyzeResponse; message?: Check
           <div className="bubble">
             {message.from && <div className="msg-from">{message.from}</div>}
             {message.subject && <strong>{message.subject}</strong>}
-            <p>{highlight(message.text, r.signals.map((s) => s.evidence ?? ""))}</p>
+            <p>{highlight(message.text, r.signals.map((s) => s.match ?? s.evidence ?? ""))}</p>
           </div>
-          {r.signals.some((s) => s.evidence) && <p className="hint">{t.highlightHint}</p>}
+          {r.signals.some((s) => s.match ?? s.evidence) && <p className="hint">{t.highlightHint}</p>}
         </section>
       )}
       {r.language !== lang && <p className="note" lang={lang}>{t[`contentIn_${r.language}`]}</p>}

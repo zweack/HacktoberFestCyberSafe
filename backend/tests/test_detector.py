@@ -198,3 +198,14 @@ def test_evidence_snippets_start_and_end_on_word_boundaries():
         assert sig.evidence
         first, last = sig.evidence.split()[0], sig.evidence.split()[-1]
         assert first in words and last in words, sig.evidence
+
+
+def test_signal_match_is_the_exact_words_inside_the_message():
+    from app.detector.rules import run_rules
+
+    text = "Dear Customer, your SBI YONO account will be blocked today. Update PAN immediately: http://sbi-yono-kyc.in/update"
+    signals = run_rules(text).signals
+    assert signals
+    for sig in signals:
+        assert sig.match and sig.match in text
+        assert len(sig.match) <= len(sig.evidence or sig.match)
