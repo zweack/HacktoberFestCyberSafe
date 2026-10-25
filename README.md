@@ -29,15 +29,21 @@ cd backend && uv run python -m app.worker
 cd web && bun install && bun run dev            # http://localhost:5173
 ```
 
-LLM settings (optional; the rule engine works without them):
-
-```sh
-mkdir -p ~/.config/cybersafe && cat > ~/.config/cybersafe/llm.env <<'EOF'
-LLM_BASE_URL=https://<jarvislabs-endpoint>/v1
-LLM_API_KEY=...
-LLM_MODEL=...
-EOF
-chmod 600 ~/.config/cybersafe/llm.env
-```
+Requirements, secrets and all settings: [`docs/SETUP.md`](docs/SETUP.md). Python pins are in `backend/requirements.txt` (exported from `uv.lock`).
 
 API reference: [`docs/API.md`](docs/API.md).
+
+## Screenshots
+
+| | | |
+|---|---|---|
+| ![Home](docs/screenshots/01-home.png) Home | ![Scam result](docs/screenshots/03-scam-result.png) Scam check (Gemma 4) | ![STOP](docs/screenshots/04-happening-now-stop.png) Happening now |
+| ![Hindi result](docs/screenshots/05-happening-now-result-hindi.png) Hindi "digital arrest" | ![Cheated](docs/screenshots/07-cheated-recovery.png) I've been cheated | ![Case](docs/screenshots/08-case-follow-up.png) Follow-up case |
+| ![Inbox](docs/screenshots/09-inbox.png) Simulated inbox | ![Message](docs/screenshots/10-inbox-message-detail.png) Message detail | ![Hindi home](docs/screenshots/06-home-hindi.png) हिंदी |
+
+Staff screens:
+
+![Coordinator queue](docs/screenshots/11-coordinator-queue.png)
+![Ops status](docs/screenshots/12-ops-status.png)
+![Temporal workflows](docs/screenshots/13-temporal-workflows.png)
+![Temporal case timeline](docs/screenshots/14-temporal-case-timeline.png)
