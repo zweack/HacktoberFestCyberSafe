@@ -39,8 +39,12 @@ export default function Inbox() {
       <>
         <button className="back" onClick={() => setOpen(null)}>‹ {t.inboxTitle}</button>
         <p className="note">{t.practiceLabel}</p>
-        <div className="bubble"><div className="msg-from">{sel.sender}</div>{sel.subject && <strong>{sel.subject}</strong>}<p>{sel.text}</p></div>
-        {sel.analysis ? <ResultCard r={sel.analysis} /> : <p className="muted">{t.notChecked}</p>}
+        {sel.analysis
+          ? <ResultCard r={sel.analysis} message={{ text: sel.text, from: sel.sender, subject: sel.subject, label: t.messageYouChecked }} />
+          : <>
+              <div className="bubble"><div className="msg-from">{sel.sender}</div>{sel.subject && <strong>{sel.subject}</strong>}<p>{sel.text}</p></div>
+              <p className="muted">{t.notChecked}</p>
+            </>}
       </>
     );
   }

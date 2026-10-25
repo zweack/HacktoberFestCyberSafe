@@ -33,7 +33,7 @@ export default function Now() {
       </>
     );
   }
-  if (result) return (<><BackHome /><ResultCard r={result} /></>);
+  if (result) return (<><BackHome /><ResultCard r={result} message={{ text, label: t.whatTheySaid }} /></>);
   return (
     <>
       <BackHome />

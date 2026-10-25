@@ -61,7 +61,38 @@ export function errorText(e: unknown, t: ReturnType<typeof useI18n>["t"]): strin
   return t.tryAgain;
 }
 
-export function ResultCard({ r }: { r: AnalyzeResponse }) {
+/** Wrap each evidence snippet found in the message in <mark>, merging overlaps. */
+function highlight(text: string, snippets: string[]): ReactNode[] {
+  const ranges: [number, number][] = [];
+  for (const snip of snippets) {
+    if (!snip) continue;
+    let from = 0;
+    for (let i = text.indexOf(snip, from); i !== -1; i = text.indexOf(snip, from)) {
+      ranges.push([i, i + snip.length]);
+      from = i + snip.length;
+    }
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const r of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+    else merged.push([...r]);
+  }
+  const out: ReactNode[] = [];
+  let pos = 0;
+  merged.forEach(([a, b], i) => {
+    if (a > pos) out.push(text.slice(pos, a));
+    out.push(<mark key={i}>{text.slice(a, b)}</mark>);
+    pos = b;
+  });
+  if (pos < text.length) out.push(text.slice(pos));
+  return out;
+}
+
+export type CheckedMessage = { text: string; label: string; from?: string; subject?: string | null };
+
+export function ResultCard({ r, message }: { r: AnalyzeResponse; message?: CheckedMessage }) {
   const { t, lang } = useI18n();
   const contactLines = r.contacts.map((c) => [c.name, c.phone].filter(Boolean).join(" "));
   const spoken = [
@@ -77,6 +108,17 @@ export function ResultCard({ r }: { r: AnalyzeResponse }) {
           <FocusHeading level={2} className="headline">{r.headline}</FocusHeading>
         </div>
       </header>
+      {message && (
+        <section className="checked-message" aria-label={message.label}>
+          <h3>{message.label}</h3>
+          <div className="bubble">
+            {message.from && <div className="msg-from">{message.from}</div>}
+            {message.subject && <strong>{message.subject}</strong>}
+            <p>{highlight(message.text, r.signals.map((s) => s.evidence ?? ""))}</p>
+          </div>
+          {r.signals.some((s) => s.evidence) && <p className="hint">{t.highlightHint}</p>}
+        </section>
+      )}
       {r.language !== lang && <p className="note" lang={lang}>{t[`contentIn_${r.language}`]}</p>}
       <p className="explain">{r.explanation}</p>
       <ReadAloud text={spoken} language={r.language} />

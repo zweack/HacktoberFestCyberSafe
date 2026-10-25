@@ -29,7 +29,7 @@ export default function Check() {
     return (
       <>
         <BackHome />
-        <ResultCard r={result} />
+        <ResultCard r={result} message={{ text, label: t.messageYouChecked }} />
         <button className="btn btn-primary" onClick={() => { setResult(null); setText(""); }}>{t.checkAnother}</button>
       </>
     );
