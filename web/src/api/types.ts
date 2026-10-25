@@ -23,6 +23,8 @@ export interface Signal {
   label: string;
   weight: number;
   evidence?: string | null;
+  /** Exact matched words, for highlighting inside the message. */
+  match?: string | null;
 }
 
 export interface ActionStep {

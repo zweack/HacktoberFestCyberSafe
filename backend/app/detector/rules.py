@@ -297,12 +297,13 @@ def run_rules(text: str, language: Language = Language.en) -> RuleResult:
                       if rule.id != "otp_request" or not negated_at(text, x)), None)
             if m:
                 signals.append(Signal(id=rule.id, label=rule.label_hi if hi else rule.label_en,
-                                      weight=rule.weight, evidence=_snippet(text, m)))
+                                      weight=rule.weight, evidence=_snippet(text, m),
+                                      match=m.group(0).strip() or None))
                 if rule.scam_type and (best is None or rule.weight > best[0]):
                     best = (rule.weight, rule.scam_type)
                 break
     for id, w, en, h, ev in link_signals(text):
-        signals.append(Signal(id=id, label=h if hi else en, weight=w, evidence=ev))
+        signals.append(Signal(id=id, label=h if hi else en, weight=w, evidence=ev, match=ev))
         if id == "apk_link" and (best is None or w > best[0]):
             best = (w, "remote_access")
 

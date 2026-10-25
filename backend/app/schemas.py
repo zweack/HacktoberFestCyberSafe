@@ -69,6 +69,7 @@ class Signal(BaseModel):
     label: str  # plain-language, in the requested language
     weight: float = Field(ge=0, le=1)
     evidence: str | None = None  # the snippet that triggered it
+    match: str | None = None  # the exact words that matched, for highlighting in the message
 
 
 class ActionStep(BaseModel):
