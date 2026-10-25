@@ -227,9 +227,15 @@ def verdict_for(score: int) -> Verdict:
     return Verdict.safe
 
 
-def _snippet(text: str, m: re.Match) -> str:
-    s, e = max(0, m.start() - 15), min(len(text), m.end() + 15)
-    return text[s:e].strip()[:120]
+def _snippet(text: str, m: re.Match, pad: int = 15) -> str:
+    """The match plus a little context, widened to whole words so quotes never start mid-word."""
+    s, e = max(0, m.start() - pad), min(len(text), m.end() + pad)
+    while s > 0 and not text[s - 1].isspace():
+        s -= 1
+    while e < len(text) and not text[e].isspace():
+        e += 1
+    snippet = text[s:e].strip()
+    return snippet if len(snippet) <= 120 else snippet[:117].rstrip() + "..."
 
 
 def run_rules(text: str, language: Language = Language.en) -> RuleResult:

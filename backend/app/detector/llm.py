@@ -81,11 +81,14 @@ async def refine(
     payload = {
         "model": s.llm_model,
         "temperature": 0.2,
+        "max_tokens": s.llm_max_tokens,
         "messages": [
             {"role": "system", "content": _SYSTEM.replace("{lang}", "Hindi (Devanagari)" if language == Language.hi else "English")},
             {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
         ],
     }
+    if s.llm_reasoning_effort:
+        payload["reasoning_effort"] = s.llm_reasoning_effort
     headers = {"Authorization": f"Bearer {s.llm_api_key}"} if s.llm_api_key else {}
     url = s.llm_base_url.rstrip("/") + "/chat/completions"
     own = client is None

@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = ""
     llm_timeout_seconds: float = 30.0
+    # Gemma 4 on Jarvislabs thinks by default; "none" answers in ~0.5s. Empty string omits the field.
+    llm_reasoning_effort: str = "none"
+    llm_max_tokens: int = 700
 
     # Temporal
     temporal_address: str = "localhost:7233"
