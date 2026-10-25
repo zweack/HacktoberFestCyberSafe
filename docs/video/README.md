@@ -1,11 +1,17 @@
 # Demo video
 
-[![Demo video poster](poster.jpg)](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v1/cybersafe-demo-v1.mp4)
+## v2: 90-second explainer (current)
 
-**[Watch / download v1 (2:09, 1920×1080, 20 MB)](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v1/cybersafe-demo-v1.mp4)**: attached to the [`demo-video-v1` release](https://github.com/zweack/HacktoberFestCyberSafe/releases/tag/demo-video-v1) so the repo stays small.
+[![Demo video v2 poster](poster-v2.jpg)](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v2/cybersafe-demo-v2.mp4)
 
-- [`SCRIPT.md`](SCRIPT.md): voiceover with timestamps, for re-recording.
-- [`SCENES.md`](SCENES.md): the scene list with visuals and sounds.
+**[Watch / download v2 (1:30, 1920×1080)](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v2/cybersafe-demo-v2.mp4)**: from the [`demo-video-v2` release](https://github.com/zweack/HacktoberFestCyberSafe/releases/tag/demo-video-v2).
+A calm explainer with a female voiceover. A focus camera walks through the real app screens (check → stop → recover → follow-up), then the rule engine with Gemma 4 on Jarvislabs, the Temporal workflow, and a real outage drill the on-call team investigates with Kepler.
 
-Made with Remotion (cinetic skill), Gemini TTS voiceover and code-generated sound effects.
-App footage uses real screenshots from `docs/screenshots/`.
+- [`SCRIPT-v2.md`](SCRIPT-v2.md): voiceover with timestamps, for re-recording.
+- [`SCENES-v2.md`](SCENES-v2.md): scene list.
+
+## v1: 2:09 comedy cut
+
+[Watch / download v1](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v1/cybersafe-demo-v1.mp4): cartoon "Sharma ji" story, male voiceover. [`SCRIPT.md`](SCRIPT.md), [`SCENES.md`](SCENES.md).
+
+Videos are attached to GitHub releases so the repo stays small. Made with Remotion (cinetic skill), Gemini TTS and code-generated sound.
