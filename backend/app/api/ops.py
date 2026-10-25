@@ -64,9 +64,20 @@ def _db_ok() -> bool:
         return False
 
 
+async def _worker_gauge() -> str:
+    from app.api.health import worker_pollers
+
+    try:
+        n = await worker_pollers()
+    except Exception:  # noqa: BLE001
+        n = -1  # could not ask Temporal
+    return ("# HELP cybersafe_worker_pollers Workers polling the follow-up task queue in the last 60s (-1 = unknown)\n"
+            f"# TYPE cybersafe_worker_pollers gauge\ncybersafe_worker_pollers {n}\n")
+
+
 @router.get("/metrics")
-def get_metrics() -> Response:
-    return Response(metrics.render() + _gauges(), media_type="text/plain; version=0.0.4")
+async def get_metrics() -> Response:
+    return Response(metrics.render() + _gauges() + await _worker_gauge(), media_type="text/plain; version=0.0.4")
 
 
 @router.get("/api/ops/chaos", response_model=ChaosSettings)
