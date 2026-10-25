@@ -44,6 +44,7 @@ without it. There are no user accounts: a person's own case is reachable by its 
 Requirements, secrets and all settings: [`docs/SETUP.md`](docs/SETUP.md). Python dependencies: [`requirements.txt`](requirements.txt) (`pip install -r requirements.txt`).
 
 API reference: [`docs/API.md`](docs/API.md). Demo script: [`docs/DEMO.md`](docs/DEMO.md).
+Kepler outage drills: [`docs/KEPLER_DRILLS.md`](docs/KEPLER_DRILLS.md). Demo video: [`docs/video/README.md`](docs/video/README.md).
 Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md). Security: [`SECURITY.md`](SECURITY.md). License: [MIT](LICENSE).
 
 ## Privacy: what the code actually does
