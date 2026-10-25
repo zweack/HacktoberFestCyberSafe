@@ -29,7 +29,7 @@ cd backend && uv run python -m app.worker
 cd web && bun install && bun run dev            # http://localhost:5173
 ```
 
-Requirements, secrets and all settings: [`docs/SETUP.md`](docs/SETUP.md). Python pins are in `backend/requirements.txt` (exported from `uv.lock`).
+Requirements, secrets and all settings: [`docs/SETUP.md`](docs/SETUP.md). Python dependencies: [`requirements.txt`](requirements.txt) (`pip install -r requirements.txt`).
 
 API reference: [`docs/API.md`](docs/API.md).
 
