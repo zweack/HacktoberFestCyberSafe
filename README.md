@@ -12,7 +12,7 @@ A helper for elderly and non-technical people that answers three questions:
 |---|---|
 | **Gemma on Jarvislabs** | Understands the message and explains the risk in plain English or Hindi, grounded in a curated directory of official Indian helplines. Runs on Jarvislabs, not on the person's phone. |
 | **Temporal** | Runs the follow-up: sends the action plan, schedules check-ins, retries failed notifications, escalates unanswered cases to a human coordinator. |
-| **Kepler** | The ops team's tool for inspecting the deployed service and investigating outages (see `docs/KEPLER_RUNBOOK.md`). |
+| **Kepler** | The ops team's tool for inspecting the deployed service and investigating outages: [runbook](docs/KEPLER_RUNBOOK.md), [recorded outage drills](docs/KEPLER_DRILLS.md). |
 
 ## Run it locally
 

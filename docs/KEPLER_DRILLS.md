@@ -5,11 +5,19 @@ uses to investigate the running service. Our code never calls Kepler. These dril
 live stack on purpose and record what Kepler is pointed at: readiness, metrics, JSON logs and
 Temporal. The full symptom table is in [`KEPLER_RUNBOOK.md`](KEPLER_RUNBOOK.md).
 
-> The screenshots below are the signals captured during the drills (terminal, Temporal UI, our ops
-> page). Screenshots of the Kepler chat window itself still need to be taken at the desk: the
-> recording session had no screen access to the Kepler app.
-
 ![Kepler](screenshots/ops-drills/00-kepler-product-page.png)
+
+What Kepler looks like in use (official screenshot from [trykepler.rubixkube.ai](https://trykepler.rubixkube.ai/), not our drill):
+Observe posture, read-only: Kepler reads, reasons and suggests, and the operator runs the command.
+
+![Kepler UI, official screenshot](screenshots/ops-drills/00b-kepler-ui-official.png)
+
+The drill screenshots below are the signals the on-call person points Kepler at (terminal, Temporal UI, our ops page).
+
+> **Kepler window captures from our own drill are not in yet.** macOS blocks screen capture of other apps
+> until someone at the Mac grants Screen Recording, so they could not be taken remotely. To add them, run
+> `./scripts/kepler-drill.sh` (below); it takes about two minutes.
+
 
 ## Drill 1: the follow-up worker dies
 
@@ -61,3 +69,17 @@ page says plainly that the AI explanation is unavailable instead of pretending.
 
 `./scripts/chaos.sh telegram 0.7` makes 70% of Telegram sends fail so Temporal's retries show up
 in workflow history. Not recorded yet: Telegram needs a bot token, which was not configured.
+
+## Capture Kepler's own window
+
+With `./scripts/dev.sh` running, in Terminal at the repo root:
+
+```sh
+./scripts/kepler-drill.sh
+```
+
+It opens a test case and kills this checkout's worker, copies the investigation prompt to the clipboard and
+opens Kepler. Paste the prompt into a new Kepler chat; at each Enter, click the Kepler window and it is saved to
+`docs/screenshots/kepler/` (`01-prompt`, `02-investigating`, `03-root-cause`, optional `04-recovered`). The
+worker is restarted at the end, or on Ctrl-C. macOS asks once for Screen Recording permission for Terminal.
+After the restart `/readyz` goes from `"degraded"` / `"worker": "no_pollers"` back to `"ready"`.
