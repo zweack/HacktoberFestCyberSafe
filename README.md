@@ -35,15 +35,22 @@ API reference: [`docs/API.md`](docs/API.md).
 
 ## Screenshots
 
-| | | |
-|---|---|---|
-| ![Home](docs/screenshots/01-home.png) Home | ![Scam result](docs/screenshots/03-scam-result.png) Scam check (Gemma 4) | ![STOP](docs/screenshots/04-happening-now-stop.png) Happening now |
-| ![Hindi result](docs/screenshots/05-happening-now-result-hindi.png) Hindi "digital arrest" | ![Cheated](docs/screenshots/07-cheated-recovery.png) I've been cheated | ![Case](docs/screenshots/08-case-follow-up.png) Follow-up case |
-| ![Inbox](docs/screenshots/09-inbox.png) Simulated inbox | ![Message](docs/screenshots/10-inbox-message-detail.png) Message detail | ![Hindi home](docs/screenshots/06-home-hindi.png) हिंदी |
+### Mobile (412 × 915)
 
-Staff screens:
+| | | | |
+|---|---|---|---|
+| ![Home](docs/screenshots/mobile/01-home.png) Home | ![Check](docs/screenshots/mobile/02-check-message.png) Check a message | ![Scam](docs/screenshots/mobile/03-scam-result.png) Scam result (Gemma 4) | ![STOP](docs/screenshots/mobile/04-happening-now-stop.png) Happening now |
+| ![Hindi](docs/screenshots/mobile/05-happening-now-hindi.png) Hindi "digital arrest" | ![Hindi home](docs/screenshots/mobile/06-home-hindi.png) हिंदी home | ![Cheated](docs/screenshots/mobile/07-cheated.png) I've been cheated | ![Plan](docs/screenshots/mobile/08-case-plan.png) Help plan |
+| ![Check-in](docs/screenshots/mobile/09-case-checkin.png) Check-in | ![Inbox](docs/screenshots/mobile/10-inbox.png) Simulated inbox | ![Message](docs/screenshots/mobile/11-inbox-message.png) Message verdict | |
 
-![Coordinator queue](docs/screenshots/11-coordinator-queue.png)
-![Ops status](docs/screenshots/12-ops-status.png)
-![Temporal workflows](docs/screenshots/13-temporal-workflows.png)
-![Temporal case timeline](docs/screenshots/14-temporal-case-timeline.png)
+### Desktop (1440 × 810)
+
+| | |
+|---|---|
+| ![Home](docs/screenshots/desktop/01-home.png) Home | ![Scam result](docs/screenshots/desktop/02-scam-result.png) Scam result |
+| ![STOP](docs/screenshots/desktop/03-happening-now-stop.png) Happening now | ![Cheated](docs/screenshots/desktop/04-cheated.png) I've been cheated |
+| ![Case](docs/screenshots/desktop/05-case.png) Help plan | ![Inbox](docs/screenshots/desktop/06-inbox.png) Simulated inbox |
+| ![Coordinator](docs/screenshots/desktop/07-coordinator.png) Coordinator queue | ![Ops](docs/screenshots/desktop/08-ops.png) Ops status and chaos switches |
+| ![Temporal](docs/screenshots/desktop/09-temporal-workflows.png) Temporal: case workflows | ![Timeline](docs/screenshots/desktop/10-temporal-case-timeline.png) Temporal: escalation and recovery |
+
+Full-length page captures are in [`docs/screenshots/full`](docs/screenshots/full).
