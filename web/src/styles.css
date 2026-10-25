@@ -22,7 +22,7 @@ h1 { font-size: 1.6rem; line-height: 1.25; margin: 0.6rem 0 0.4rem; }
 h2 { font-size: 1.25rem; margin: 1.6rem 0 0.5rem; }
 h3 { font-size: 1.05rem; margin: 1.4rem 0 0.4rem; }
 a { color: var(--peacock); }
-:focus-visible { outline: 4px solid #f2b705; outline-offset: 3px; }
+:focus-visible { outline: 4px solid #0b2e4f; outline-offset: 3px; box-shadow: 0 0 0 7px #f2b705; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 .demo-banner { background: #fff1c2; color: #5b4200; padding: 0.5rem 1rem; font-size: 0.85rem; text-align: center; border-bottom: 2px solid #e8c45a; }
@@ -76,7 +76,7 @@ textarea, input:not([type=radio]):not([type=checkbox]):not([type=range]) { width
 .chip { min-height: 56px; display: inline-flex; align-items: center; padding: 0 1.1rem; border: 2px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; }
 .chip input { position: absolute; opacity: 0; pointer-events: none; }
 .chip.on { border-color: var(--peacock); background: #dcedf1; font-weight: 700; }
-.chip:focus-within { outline: 4px solid #f2b705; }
+.chip:focus-within { outline: 4px solid #0b2e4f; box-shadow: 0 0 0 7px #f2b705; }
 .error { color: var(--stop); font-weight: 700; }
 .small { font-size: 0.8rem; }
 .ok { color: var(--safe); font-weight: 700; }
@@ -179,3 +179,6 @@ textarea, input:not([type=radio]):not([type=checkbox]):not([type=range]) { width
 .chaos label { display: grid; gap: 0.3rem; font-weight: 700; }
 .chaos label.row { display: flex; align-items: center; gap: 0.5rem; }
 .chaos input[type=checkbox] { width: 24px; height: 24px; }
+.tile-warn { background: var(--amber); }
+.staff-token { margin: 0 0 1rem; }
+.staff-token label { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }

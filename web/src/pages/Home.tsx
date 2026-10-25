@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api/client";
+import { api, recentCase } from "../api/client";
 import type { FeedMessage } from "../api/types";
 import { VerdictBadge } from "../components";
 import { useI18n } from "../i18n";
@@ -8,7 +8,9 @@ import { useI18n } from "../i18n";
 export default function Home() {
   const { t } = useI18n();
   const [feed, setFeed] = useState<FeedMessage[] | null>(null);
-  useEffect(() => { api.feed().then(setFeed).catch(() => setFeed([])); }, []);
+  const [feedErr, setFeedErr] = useState(false);
+  const planId = recentCase.get();
+  useEffect(() => { api.feed().then(setFeed).catch(() => setFeedErr(true)); }, []);
   return (
     <>
       <h1 className="greet">{t.greeting}</h1>
@@ -27,8 +29,11 @@ export default function Home() {
           <span><strong>{t.homeCheated}</strong><small>{t.homeCheatedSub}</small></span>
         </Link>
       </nav>
+      {planId && <Link to={`/case/${planId}`} className="btn btn-primary">📋 {t.openPlan}</Link>}
       <section className="inbox-preview">
         <h2>{t.myMessages}</h2>
+        <p className="muted">{t.practiceLabel}</p>
+        {feedErr && <p className="error">{t.feedFailed}</p>}
         {feed && feed.length === 0 && <p className="muted">{t.noMessages}</p>}
         <ul className="msgs">
           {feed?.slice(0, 3).map((m) => (

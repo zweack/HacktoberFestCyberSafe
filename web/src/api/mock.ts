@@ -1,4 +1,4 @@
-// Demo data used when VITE_MOCK=1 or when the API cannot be reached.
+// Demo data, used only when the app is built or run with VITE_MOCK=1.
 // Mock analyses always say ai_used=false and carry an ai_error, so they are never shown as AI results.
 import type {
   AnalyzeRequest, AnalyzeResponse, Case, CaseCreate, CaseStep, ChaosSettings, Contact,
@@ -166,7 +166,7 @@ export async function mockRequest(method: string, path: string, body?: unknown):
       telegram_chat_id: b.telegram_chat_id ?? null, trusted_contact_name: b.trusted_contact_name ?? null,
       trusted_contact_telegram_chat_id: b.trusted_contact_telegram_chat_id ?? null, analysis: a,
       steps: a.steps.map((s): CaseStep => ({ ...s, done: false, done_at: null })),
-      workflow_id: null, checkins_sent: 1, unanswered_checkins: 0, coordinator: null, timeline: [],
+      workflow_id: null, checkins_sent: 1, unanswered_checkins: 0, coordinator: null, followup_pending: false, timeline: [],
     };
     cases.set(c.id, c);
     event(c, "created", "Case opened (demo)");
@@ -189,9 +189,11 @@ export async function mockRequest(method: string, path: string, body?: unknown):
       c.status = "escalated";
       event(c, "escalated", "Sent to a helper");
       notify(c, "coordinator", `${c.person_name} needs help.`);
-    } else if (ans === "done" && c.steps.every((s) => s.done)) {
+    } else if (ans === "done") {
+      // Same contract as the server: "Done" is the person's confirmation and closes the case.
+      c.steps.forEach((s) => { if (!s.done) { s.done = true; s.done_at = now(); } });
       c.status = "resolved";
-      event(c, "resolved", "All steps done");
+      event(c, "resolved", "Person confirmed the steps are done");
     }
     return c;
   }

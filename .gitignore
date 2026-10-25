@@ -231,3 +231,10 @@ web/dist/
 # ops runtime
 logs/
 .data/
+
+# Build caches and env variants
+*.tsbuildinfo
+.env.*
+!.env.example
+!*.env.example
+.ruff_cache/

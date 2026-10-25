@@ -24,6 +24,6 @@ case "${1:-show}" in
     cwd=$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' || true)
     [ -z "$cwd" ] || [ "$cwd" = "$ROOT/backend" ] || { echo "pid $pid runs in $cwd, not this checkout"; exit 1; }
     echo "killing worker pid $pid"; kill -9 "$pid"; rm -f "$pidfile"
-    echo "restart with: cd $ROOT/backend && (.venv/bin/python -m app.worker >>$ROOT/logs/worker.log 2>&1 & echo $! >$ROOT/.data/worker.pid)" ;;
+    echo "restart with: cd $ROOT/backend && (.venv/bin/python -m app.worker >>$ROOT/logs/worker.log 2>&1 & echo \$! >$ROOT/.data/worker.pid)" ;;
   *) echo "usage: $0 telegram RATE | llm down|up | slow MS | reset | show | kill-worker"; exit 2 ;;
 esac

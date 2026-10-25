@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../api/client";
 import type { AnalyzeResponse } from "../api/types";
-import { BackHome, ReadAloud, ResultCard } from "../components";
+import { BackHome, errorText, ReadAloud, ResultCard } from "../components";
 import { useI18n } from "../i18n";
 
 export default function Now() {
@@ -15,7 +15,7 @@ export default function Now() {
   async function submit() {
     setBusy(true); setErr(null);
     try { setResult(await api.analyze({ text, channel: "call", situation: "in_progress", language: lang })); }
-    catch { setErr(t.tryAgain); }
+    catch (e) { setErr(errorText(e, t)); }
     finally { setBusy(false); }
   }
 
@@ -39,7 +39,7 @@ export default function Now() {
       <BackHome />
       <h1>{t.describeTitle}</h1>
       <p className="lede">{t.describeHint}</p>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} aria-label={t.describeTitle} />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} maxLength={10000} aria-label={t.describeTitle} />
       {err && <p className="error" role="alert">{err}</p>}
       <button className="btn btn-primary" disabled={!text.trim() || busy} onClick={submit}>
         {busy ? t.checking : t.describeBtn}

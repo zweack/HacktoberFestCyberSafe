@@ -100,6 +100,8 @@ export interface Case {
   checkins_sent: number;
   unanswered_checkins: number;
   coordinator?: string | null;
+  /** True while a change has not reached the follow-up service yet; retried automatically. */
+  followup_pending: boolean;
   timeline: TimelineEvent[];
 }
 
@@ -147,6 +149,6 @@ export interface ChaosSettings {
 }
 
 export interface ReadyStatus {
-  status: "ready" | "not_ready";
+  status: "ready" | "degraded" | "not_ready";
   checks: Record<string, unknown>;
 }
