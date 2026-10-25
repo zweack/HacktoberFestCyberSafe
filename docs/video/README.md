@@ -1,6 +1,14 @@
 # Demo video
 
-## v2: 90-second explainer (current)
+## v3: 90-second explainer, light mode (current)
+
+[![Demo video v3 poster](poster-v3.jpg)](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v3/cybersafe-demo-v3.mp4)
+
+**[Watch / download v3 (1:30, 1920×1080)](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v3/cybersafe-demo-v3.mp4)**: from the [`demo-video-v3` release](https://github.com/zweack/HacktoberFestCyberSafe/releases/tag/demo-video-v3).
+Same narration and flow as v2, in light mode with the kittyleads.com typefaces (Bricolage Grotesque, Geist, Newsreader, Geist Mono).
+Script: [`SCRIPT-v2.md`](SCRIPT-v2.md). Visual changes: [`SCENES-v3.md`](SCENES-v3.md).
+
+## v2: 90-second explainer, dark mode
 
 [![Demo video v2 poster](poster-v2.jpg)](https://github.com/zweack/HacktoberFestCyberSafe/releases/download/demo-video-v2/cybersafe-demo-v2.mp4)
 
