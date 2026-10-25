@@ -186,3 +186,14 @@ async def test_metrics_and_no_pii_in_logs(caplog):
     assert "SECRETTEXT" not in caplog.text
     rec = [r for r in caplog.records if getattr(r, "event", None) == "analysis"][0]
     assert rec.verdict == "scam" and "SECRETTEXT" not in json.dumps(rec.__dict__, default=str)
+
+
+def test_evidence_snippets_start_and_end_on_word_boundaries():
+    from app.detector.rules import run_rules
+
+    text = "Dear Customer, your SBI YONO account will be blocked today. Update PAN immediately: http://sbi-yono-kyc.in/update"
+    words = set(text.split())
+    for sig in run_rules(text).signals:
+        assert sig.evidence
+        first, last = sig.evidence.split()[0], sig.evidence.split()[-1]
+        assert first in words and last in words, sig.evidence
