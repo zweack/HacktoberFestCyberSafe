@@ -2,6 +2,18 @@
 
 Everything runs natively on macOS or Linux. Docker is optional (see `ops/`).
 
+## Quick start (new machine)
+
+```sh
+git clone https://github.com/zweack/HacktoberFestCyberSafe.git && cd HacktoberFestCyberSafe
+brew install temporal                       # or: curl -sSf https://temporal.download/cli.sh | sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+curl -fsSL https://bun.sh/install | bash
+mkdir -p ~/.config/cybersafe && cp ops/llm.env.example ~/.config/cybersafe/llm.env && chmod 600 ~/.config/cybersafe/llm.env
+# put your Jarvislabs key in ~/.config/cybersafe/llm.env, then:
+./scripts/dev.sh                            # open http://localhost:5173
+```
+
 ## 1. System requirements
 
 | Tool | Version tested | Install |
@@ -35,10 +47,10 @@ pip install -r ../requirements.txt       # runtime: FastAPI, uvicorn, temporalio
 pip install -r requirements-dev.txt      # tests: pytest, pytest-asyncio
 ```
 
-Regenerate them after changing dependencies:
+Regenerate them after changing dependencies (from `backend/`; keep the header comment block in the root file):
 
 ```sh
-uv export --frozen --no-dev --no-hashes --no-emit-project -o requirements.txt
+uv export --frozen --no-dev --no-hashes --no-emit-project | grep -vE '^\s*#' >> ../requirements.txt   # after trimming old pins
 uv export --frozen --only-group dev --no-hashes --no-emit-project -o requirements-dev.txt
 ```
 
