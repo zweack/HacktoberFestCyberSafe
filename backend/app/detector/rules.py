@@ -64,7 +64,7 @@ SCAM_RULES: tuple[Rule, ...] = (
        r"(arrest|warrant|giraftar).{0,40}(aadhaar|aadhar|video call|skype)",
        r"डिजिटल अरेस्ट|गिरफ़्तार|गिरफ्तार|वारंट|सीबीआई|आधार.{0,30}(केस|मामला)",
        scam_type="digital_arrest"),
-    _r("courier_parcel", 0.6, "Says a parcel in your name has drugs or is held by customs", "आपके नाम के पार्सल में ड्रग्स या कस्टम में रुका होने की बात",
+    _r("courier_parcel", 0.65, "Says a parcel in your name has drugs or is held by customs", "आपके नाम के पार्सल में ड्रग्स या कस्टम में रुका होने की बात",
        r"(parcel|package|courier|fedex|dhl|shipment).{0,60}(drug|mdma|narcotic|illegal|seized|customs|held|suspicious|passport)",
        r"(fedex|dhl).{0,40}(press|dial|call)",
        r"पार्सल.{0,40}(ड्रग्स|कस्टम|ज़ब्त|जब्त|अवैध)",
@@ -128,7 +128,7 @@ SCAM_RULES: tuple[Rule, ...] = (
 
 GENERIC_RULES: tuple[Rule, ...] = (
     _r("urgency", 0.3, "Rushes you with a deadline", "जल्दबाज़ी कराता है, समय-सीमा देता है",
-       r"\b(urgent|immediately|right now|within \d+ ?(hours?|hrs|minutes?|mins)|today itself|tonight|last chance|final notice|expires? today|jaldi|turant|abhi)\b",
+       r"\b(urgent|urgently|immediately|asap|right now|within \d+ ?(hours?|hrs|minutes?|mins)|today itself|tonight|last chance|final notice|expires? today|jaldi|turant|abhi)\b",
        r"तुरंत|अभी|आज ही|जल्दी|आज रात|अंतिम"),
     _r("threat", 0.3, "Threatens you with penalty, blocking or legal action", "जुर्माना, ब्लॉक या कानूनी कार्रवाई की धमकी",
        r"\b(legal action|penalty|fine of|will be (blocked|suspended|disconnected|arrested)|police case|jail)\b",
