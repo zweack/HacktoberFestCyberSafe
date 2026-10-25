@@ -4,6 +4,8 @@ No token or no chat id means Telegram is skipped, not an error.
 Chaos: get_chaos().telegram_failure_rate makes sends fail at random.
 """
 
+import hashlib
+import hmac
 import random
 
 import httpx
@@ -24,18 +26,28 @@ def enabled(chat_id: str | None) -> bool:
     return bool(get_settings().telegram_bot_token and chat_id)
 
 
+def _sign(case_id: str, answer: str) -> str:
+    """Short HMAC so a forged callback payload cannot pick an arbitrary case or answer."""
+    key = hashlib.sha256(b"cybersafe-callback:" + get_settings().telegram_bot_token.encode()).digest()
+    return hmac.new(key, f"{case_id}:{answer}".encode(), hashlib.sha256).hexdigest()[:16]
+
+
 def checkin_keyboard(case_id: str) -> dict:
+    # callback_data is limited to 64 bytes: "ci:" + case id (17) + answer (<=9) + 16-char signature fits.
     return {
         "inline_keyboard": [
-            [{"text": label, "callback_data": f"ci:{case_id}:{answer}"} for label, answer in CHECKIN_BUTTONS]
+            [{"text": label, "callback_data": f"ci:{case_id}:{answer}:{_sign(case_id, answer)}"}
+             for label, answer in CHECKIN_BUTTONS]
         ]
     }
 
 
 def parse_callback(data: str) -> tuple[str, str] | None:
+    """(case_id, answer) for a correctly signed check-in button, else None."""
     parts = (data or "").split(":")
-    if len(parts) == 3 and parts[0] == "ci":
-        return parts[1], parts[2]
+    if len(parts) == 4 and parts[0] == "ci" and parts[2] in {a for _, a in CHECKIN_BUTTONS}:
+        if hmac.compare_digest(parts[3], _sign(parts[1], parts[2])):
+            return parts[1], parts[2]
     return None
 
 

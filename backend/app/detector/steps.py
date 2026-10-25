@@ -1,7 +1,7 @@
 """Situation-aware next steps and rule-based plain-language text (English + Hindi)."""
 
 from app.directory.directory import contacts_for
-from app.schemas import ActionStep, Contact, Language, Situation, Verdict
+from app.schemas import ActionStep, CaseStep, Contact, Language, Situation, Verdict
 
 # (id, urgent, contact_id, title_en, detail_en, title_hi, detail_hi)
 _STEPS: dict[Situation, list[tuple]] = {
@@ -61,6 +61,11 @@ def steps_for(situation: Situation, verdict: Verdict, lang: Language) -> list[Ac
         rows = [r for r in rows if r[0] == "verify_official"]
     return [ActionStep(id=r[0], urgent=r[1], contact_id=r[2], title=r[5] if hi else r[3], detail=r[6] if hi else r[4])
             for r in rows]
+
+
+def recovery_case_steps(lang: Language) -> list[CaseStep]:
+    """The one reviewed recovery plan, used for cases opened without an analysis."""
+    return [CaseStep(**s.model_dump()) for s in steps_for(Situation.victim, Verdict.scam, lang)]
 
 
 def relevant_contact_ids(situation: Situation, verdict: Verdict, scam_type: str | None, text: str) -> list[str]:

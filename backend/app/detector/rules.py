@@ -5,6 +5,7 @@ Covers common Indian scam patterns in English, Hindi (Devanagari) and Hinglish.
 
 import re
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 from app.schemas import Language, Signal, Verdict
 
@@ -146,13 +147,33 @@ GENERIC_RULES: tuple[Rule, ...] = (
        r"(कॉल|संपर्क).{0,20}[6-9]\d{9}"),
 )
 
-_NEGATED = re.compile(r"(do not|don'?t|never|mat|nahi|kabhi bhi|\bन\s|\bना\s|मत\s)", re.I)
+# Negation words, matched as whole words. Devanagari has combining marks, so Hindi words
+# are bounded by whitespace/punctuation instead of \b.
+_NEGATED = re.compile(
+    r"\b(do not|don'?t|dont|never|mat|nahi|nahin|na|kabhi bhi)\b"
+    r"|(?:^|[\s,.])(न|ना|मत|नहीं|कभी\s+न)(?=[\s,.!?।]|$)",
+    re.I,
+)
+# A negation only counts inside the same clause as the request.
+_CLAUSE_END = re.compile(r"[.!?;\n।]")
+
+
+def negated_at(text: str, m: re.Match) -> bool:
+    """True if this occurrence is advice ("do not share your OTP"), not a request."""
+    start = max(0, m.start() - 25)
+    before = text[start:m.start()]
+    ends = list(_CLAUSE_END.finditer(before))
+    if ends:
+        start += ends[-1].end()
+    # Only the matched span up to its first clause end counts (re.S lets matches cross sentences).
+    span = text[start:m.end()]
+    return bool(_NEGATED.search(span))
 
 _COMPILED = {r.id: tuple(re.compile(p, re.I | re.S) for p in r.patterns) for r in SCAM_RULES + GENERIC_RULES}
 
 # ---------------------------------------------------------------- links
 
-_URL_RE = re.compile(r"(?:https?://|www\.)[^\s<>\"')]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|in|net|org|xyz|top|info|co|link|ly|me|io|site|online|app|apk)(?:/[^\s<>\"')]*)?", re.I)
+URL_RE = re.compile(r"(?:https?://|www\.)[^\s<>\"')]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|in|net|org|xyz|top|info|co|link|ly|me|io|site|online|app|apk)(?:/[^\s<>\"')]*)?", re.I)
 _SHORTENERS = {"bit.ly", "tinyurl.com", "t.ly", "cutt.ly", "rb.gy", "is.gd", "goo.gl", "shorturl.at", "tiny.cc", "ow.ly", "rebrand.ly", "t.co", "s.id", "wa.me"}
 _BANK_WORDS = ("sbi", "hdfc", "icici", "axis", "kotak", "pnb", "baroda", "bob", "yono", "paytm", "phonepe", "npci", "rbi", "uidai", "aadhaar", "incometax", "epfo")
 _OFFICIAL_DOMAINS = (
@@ -164,12 +185,29 @@ _GOV_WORDS = ("gov", "govt", "police", "cbi", "trai", "customs", "incometax", "u
 _IP_RE = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
 
 
-def _host(url: str) -> str:
-    u = re.sub(r"^https?://", "", url, flags=re.I).split("/")[0].split(":")[0].lower()
-    return u.removeprefix("www.")
+@dataclass(frozen=True)
+class _Link:
+    host: str  # the real destination hostname, lowercased, no "www.", no trailing dot
+    has_userinfo: bool  # "https://sbi.co.in@evil.example/" style: the part before @ is a decoy
+    odd_host: bool  # percent-encoded, non-ASCII or otherwise unusual hostname
+
+
+def _parse(url: str) -> _Link | None:
+    """Parse with urllib so userinfo and ports are split the way a browser does."""
+    raw = url if re.match(r"^[a-z][a-z0-9+.-]*://", url, re.I) else "http://" + url
+    try:
+        parts = urlsplit(raw)
+        host = parts.hostname or ""
+        parts.port  # noqa: B018 - raises ValueError for a malformed port
+    except ValueError:
+        return None
+    host = host.rstrip(".").removeprefix("www.")
+    odd = "%" in parts.netloc or not host.isascii() or host.startswith("xn--") or ".xn--" in host
+    return _Link(host=host, has_userinfo="@" in parts.netloc, odd_host=odd)
 
 
 def _is_official(host: str) -> bool:
+    """Exact domain, or a subdomain of it (on a dot boundary): sbi.co.in, x.sbi.co.in; never sbi.co.in.evil.com."""
     return any(host == d or host.endswith("." + d) for d in _OFFICIAL_DOMAINS) or host.endswith(".gov.in") or host.endswith(".nic.in")
 
 
@@ -183,11 +221,21 @@ def link_signals(text: str) -> list[tuple[str, float, str, str, str]]:
             seen.add(id)
             out.append((id, w, en, hi, ev))
 
-    for m in _URL_RE.finditer(text):
+    for m in URL_RE.finditer(text):
         url = m.group(0).rstrip(".,;")
-        host = _host(url)
+        link = _parse(url)
+        if link is None:
+            add("unknown_link", 0.15, "Contains a link to an unknown website", "किसी अनजान वेबसाइट का लिंक है", url)
+            continue
+        host = link.host
         if not host or "." not in host:
             continue
+        if link.has_userinfo:
+            add("userinfo_link", 0.6, "Link hides its real address behind a fake name (uses @)",
+                "लिंक @ का इस्तेमाल करके अपना असली पता छिपाता है", url)
+        if link.odd_host:
+            add("odd_link", 0.4, "Link uses strange characters to look like a real site",
+                "लिंक असली साइट जैसा दिखने के लिए अजीब अक्षरों का इस्तेमाल करता है", url)
         if url.lower().endswith(".apk") or ".apk?" in url.lower():
             add("apk_link", 0.7, "Link downloads an app file (.apk) – this can take over your phone",
                 "लिंक एक ऐप फ़ाइल (.apk) डाउनलोड करता है – इससे आपका फ़ोन हैक हो सकता है", url)
@@ -244,9 +292,9 @@ def run_rules(text: str, language: Language = Language.en) -> RuleResult:
     best: tuple[float, str] | None = None
     for rule in SCAM_RULES + GENERIC_RULES:
         for pat in rule.compiled():
-            m = pat.search(text)
-            if m and rule.id == "otp_request" and _NEGATED.search(text[max(0, m.start() - 25):m.end()]):
-                m = None  # "do not share your OTP" is advice, not a request
+            # Check every occurrence: "Do not share your OTP ... Please share your OTP" is a request.
+            m = next((x for x in pat.finditer(text)
+                      if rule.id != "otp_request" or not negated_at(text, x)), None)
             if m:
                 signals.append(Signal(id=rule.id, label=rule.label_hi if hi else rule.label_en,
                                       weight=rule.weight, evidence=_snippet(text, m)))

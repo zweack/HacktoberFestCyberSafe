@@ -5,6 +5,7 @@ import asyncio
 from fastapi import APIRouter, Response
 
 from app import db
+from app.auth import staff_auth_enabled
 from app.config import get_settings
 
 router = APIRouter(tags=["health"])
@@ -33,6 +34,7 @@ async def readyz(response: Response) -> dict:
     except Exception as exc:  # noqa: BLE001
         checks["temporal"] = f"error: {exc!r}"
     checks["llm"] = "configured" if settings.llm_configured else "not_configured"
+    checks["staff_auth"] = "enabled" if staff_auth_enabled() else "disabled"
     ready = checks["database"] == "ok" and checks["temporal"] == "ok"
     response.status_code = 200 if ready else 503
     return {"status": "ready" if ready else "not_ready", "checks": checks}

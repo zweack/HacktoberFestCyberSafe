@@ -1,13 +1,15 @@
 """/metrics and chaos switches for the ops team. Owner: ops."""
 
 import json
+import logging
 import os
 import platform
 import time
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Depends, Response
 
 from app import chaos, db, metrics
+from app.auth import require_staff
 from app.schemas import ChaosSettings
 
 router = APIRouter(tags=["ops"])
@@ -72,9 +74,7 @@ def get_chaos() -> ChaosSettings:
     return chaos.get_chaos()
 
 
-@router.put("/api/ops/chaos", response_model=ChaosSettings)
+@router.put("/api/ops/chaos", response_model=ChaosSettings, dependencies=[Depends(require_staff)])
 def put_chaos(body: ChaosSettings) -> ChaosSettings:
-    import logging
-
     logging.getLogger("app.ops").warning("chaos updated", extra={"chaos": json.loads(body.model_dump_json())})
     return chaos.set_chaos(body)

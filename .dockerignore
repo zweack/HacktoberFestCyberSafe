@@ -1,0 +1,21 @@
+# Docker build context: never ship secrets, local databases, logs or dependency folders.
+**/.env
+**/.env.*
+**/*.env
+!ops/llm.env.example
+**/data/
+**/*.db
+**/*.db-*
+**/*.sqlite*
+.data/
+logs/
+**/*.log
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/node_modules/
+web/dist/
+**/*.tsbuildinfo
+.git/
+docs/screenshots/

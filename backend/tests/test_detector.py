@@ -143,7 +143,8 @@ async def test_llm_success(monkeypatch):
 
     _configure(monkeypatch, handler)
     r = await analyze(AnalyzeRequest(text=SCAMS[0][0]))
-    assert r.ai_used and r.ai_error is None and r.headline == "Do not click."
+    assert r.ai_used and r.ai_error is None and r.explanation == "Fake bank."
+    assert r.headline == "This is a scam. Do not click, reply or pay."  # headline is never model text
     user = json.loads(seen["body"]["messages"][1]["content"])
     assert user["rule_signals"] and user["directory"]
 

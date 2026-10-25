@@ -149,6 +149,8 @@ class Case(BaseModel):
     checkins_sent: int = 0
     unanswered_checkins: int = 0
     coordinator: str | None = None
+    # True while a change could not reach the follow-up service yet; it is retried automatically.
+    followup_pending: bool = False
     timeline: list["TimelineEvent"] = []
 
 
